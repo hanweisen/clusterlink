@@ -3,7 +3,7 @@ GOARCH ?= $(shell go env GOARCH)
 VERSION ?= '$(shell hack/version.sh)'
 
 # Images management
-REGISTRY?="nexus.cmss.com:8086/cnp/clusterlink"
+REGISTRY?="ghcr.io/kosmos-io/clusterlink"
 REGISTRY_USER_NAME?=""
 REGISTRY_PASSWORD?=""
 REGISTRY_SERVER_ADDRESS?=""
@@ -14,6 +14,7 @@ TARGETS :=  clusterlink-controller-manager  \
             clusterlink-elector \
 			clusterlink-floater \
 			clusterlink-network-manager \
+			clusterlink-proxy \
 
 CTL_TARGETS := linkctl
 

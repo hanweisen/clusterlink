@@ -7,7 +7,7 @@ set -o pipefail
 CURRENT="$(dirname "${BASH_SOURCE[0]}")"
 ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 DEFAULT_NAMESPACE="clusterlink-system"
-KIND_IMAGE="nexus.cmss.com:8086/cnp/kindest/node:v1.25.3_1"
+KIND_IMAGE="ghcr.io/kosmos-io/clusterlink/kindest/node:v1.25.3_1"
 # true: when cluster is exist reuse exist one
 REUSE=${REUSE:-false}
 VERSION=${VERSION:-latest}
@@ -59,21 +59,13 @@ function create_cluster() {
     docker exec ${clustername}-control-plane /bin/sh -c "cat /etc/kubernetes/admin.conf"| sed -e "s|${clustername}-control-plane|$dockerip|g" -e "/certificate-authority-data:/d" -e "5s/^/    insecure-skip-tls-verify: true\n/"  -e "w ${CLUSTER_DIR}/kubeconfig"
 
     # install calico
-    docker pull nexus.cmss.com:8086/quay.io/tigera/operator:v1.29.0
-    docker pull nexus.cmss.com:8086/calico/cni:v3.25.0
-    docker pull nexus.cmss.com:8086/calico/typha:v3.25.0
-    docker pull nexus.cmss.com:8086/calico/pod2daemon-flexvol:v3.25.0
-    docker pull nexus.cmss.com:8086/kube-controllers:v3.25.0
-    docker pull nexus.cmss.com:8086/calico/node:v3.25.0
-    docker pull nexus.cmss.com:8086/calico/csi:v3.25.0
-
-    docker tag nexus.cmss.com:8086/quay.io/tigera/operator:v1.29.0 quay.io/tigera/operator:v1.29.0
-    docker tag nexus.cmss.com:8086/calico/cni:v3.25.0 docker.io/calico/cni:v3.25.0
-    docker tag nexus.cmss.com:8086/calico/typha:v3.25.0 docker.io/calico/typha:v3.25.0
-    docker tag nexus.cmss.com:8086/calico/pod2daemon-flexvol:v3.25.0 docker.io/calico/pod2daemon-flexvol:v3.25.0
-    docker tag nexus.cmss.com:8086/kube-controllers:v3.25.0 docker.io/calico/kube-controllers:v3.25.0
-    docker tag nexus.cmss.com:8086/calico/node:v3.25.0 docker.io/calico/node:v3.25.0
-    docker tag nexus.cmss.com:8086/calico/csi:v3.25.0 docker.io/calico/csi:v3.25.0
+    docker pull quay.io/tigera/operator:v1.29.0
+    docker pull docker.io/calico/cni:v3.25.0
+    docker pull docker.io/calico/typha:v3.25.0
+    docker pull docker.io/calico/pod2daemon-flexvol:v3.25.0
+    docker pull docker.io/calico/kube-controllers:v3.25.0
+    docker pull docker.io/calico/node:v3.25.0
+    docker pull docker.io/calico/csi:v3.25.0
 
     kind load docker-image -n "$clustername" quay.io/tigera/operator:v1.29.0
     kind load docker-image -n "$clustername" docker.io/calico/cni:v3.25.0
@@ -110,12 +102,12 @@ metadata:
 spec:
   cni: "calico"
   defaultNICName: eth0
-  imageRepository: "nexus.cmss.com:8086/cnp/clusterlink"
+  imageRepository: "ghcr.io/kosmos-io/clusterlink"
   networkType: "gateway"
 EOF
   kubectl --context="kind-${member_cluster}" apply -f "$ROOT"/deploy/clusterlink-namespace.yml
-  kubectl --context="kind-${member_cluster}" -n clusterlink-system delete configmap clusterlink-proxy || true
-  kubectl --context="kind-${member_cluster}" -n clusterlink-system create configmap clusterlink-proxy --from-file=kubeconfig="${ROOT}/environments/${host_cluster}/kubeconfig"
+  kubectl --context="kind-${member_cluster}" -n clusterlink-system delete secret controlpanel-config || true
+  kubectl --context="kind-${member_cluster}" -n clusterlink-system create secret generic controlpanel-config --from-file=kubeconfig="${ROOT}/environments/${host_cluster}/kubeconfig"
   kubectl --context="kind-${member_cluster}" apply -f "$ROOT"/deploy/clusterlink-datapanel-rbac.yml
   sed -e "s|__VERSION__|$VERSION|g" -e "s|__CLUSTER_NAME__|$member_cluster|g" -e "w ${ROOT}/environments/${member_cluster}/clusterlink-operator.yml" "$ROOT"/deploy/clusterlink-operator.yml
   kubectl --context="kind-${member_cluster}" apply -f "${ROOT}/environments/${member_cluster}/clusterlink-operator.yml"
@@ -139,11 +131,12 @@ function deploy_clusterlink() {
 function load_clusterlink_images() {
     local -r clustername=$1
 
-    kind load docker-image -n "$clustername" nexus.cmss.com:8086/cnp/clusterlink/clusterlink-network-manager:"${VERSION}"
-    kind load docker-image -n "$clustername" nexus.cmss.com:8086/cnp/clusterlink/clusterlink-controller-manager:"${VERSION}"
-    kind load docker-image -n "$clustername" nexus.cmss.com:8086/cnp/clusterlink/clusterlink-elector:"${VERSION}"
-    kind load docker-image -n "$clustername" nexus.cmss.com:8086/cnp/clusterlink/clusterlink-operator:"${VERSION}"
-    kind load docker-image -n "$clustername" nexus.cmss.com:8086/cnp/clusterlink/clusterlink-agent:"${VERSION}"
+    kind load docker-image -n "$clustername" ghcr.io/kosmos-io/clusterlink/clusterlink-network-manager:"${VERSION}"
+    kind load docker-image -n "$clustername" ghcr.io/kosmos-io/clusterlink/clusterlink-controller-manager:"${VERSION}"
+    kind load docker-image -n "$clustername" ghcr.io/kosmos-io/clusterlink/clusterlink-elector:"${VERSION}"
+    kind load docker-image -n "$clustername" ghcr.io/kosmos-io/clusterlink/clusterlink-operator:"${VERSION}"
+    kind load docker-image -n "$clustername" ghcr.io/kosmos-io/clusterlink/clusterlink-agent:"${VERSION}"
+    kind load docker-image -n "$clustername" ghcr.io/kosmos-io/clusterlink/clusterlink-proxy:"${VERSION}"
 }
 
 function delete_cluster() {
