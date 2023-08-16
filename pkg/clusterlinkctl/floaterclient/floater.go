@@ -68,7 +68,6 @@ func (i *Floater) InitKubeClient() error {
 		}
 
 		i.KueResetConfig = restConfig
-
 	}
 	return nil
 }
@@ -192,7 +191,6 @@ func (i *Floater) initFloaterRBAC() error {
 	}
 
 	return nil
-
 }
 
 func (i *Floater) initFloaterDaemonSet() error {

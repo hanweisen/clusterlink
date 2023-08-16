@@ -22,7 +22,6 @@ var serviceaccountTemplateNameMap = map[string]string{
 }
 
 func (i *CommandInitOption) initClusterlinkClusterRole() error {
-
 	klog.Info("Create Clusterlink ClusterRole")
 	clusterlinkClusterRoleBytes, err := utils.ParseTemplate(clusterlinkClusterRole,
 		RBACStuctNull{})
@@ -37,14 +36,12 @@ func (i *CommandInitOption) initClusterlinkClusterRole() error {
 	clusterlinkClusterRoleStruct := &rbacv1.ClusterRole{}
 	if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(),
 		clusterlinkClusterRoleBytes, clusterlinkClusterRoleStruct); err != nil {
-
 		return fmt.Errorf("decode clusterlinkClusterRoleBytes error : %v ", err)
 	}
 
 	// create or update
 	if _, err := i.KubeClientSet.RbacV1().ClusterRoles().Create(context.TODO(), clusterlinkClusterRoleStruct,
 		metav1.CreateOptions{}); err != nil {
-
 		if !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("create ClusterRole error : %v ", err)
 		} else if apierrors.IsAlreadyExists(err) {
@@ -60,7 +57,6 @@ func (i *CommandInitOption) initClusterlinkClusterRole() error {
 }
 
 func (i *CommandInitOption) retriveClusterLinkSA() ([]KubeResourceInfo, error) {
-
 	SaInK8sList := []KubeResourceInfo{}
 	saDeployedByCL := []string{}
 	for k := range serviceaccountTemplateNameMap {
@@ -85,7 +81,6 @@ func (i *CommandInitOption) retriveClusterLinkSA() ([]KubeResourceInfo, error) {
 }
 
 func (i *CommandInitOption) initClusterlinkClusterRoleBinding() error {
-
 	klog.Info("Create Clusterlink ClusterRoleBing")
 	clusterlinkClusterRoleBindingBytes, err := utils.ParseTemplate(clusterlinkClusterRoleBinding,
 		ClusterRoleBindingReplace{

@@ -80,5 +80,4 @@ func (h *HostClusterHelper) GetClusterInfo(clusterName string) (*rest.Config, *k
 		}
 	*/
 	return nil, nil, nil, fmt.Errorf("cannot find cluster: %s", clusterName)
-
 }
