@@ -12,6 +12,8 @@ KIND_IMAGE="ghcr.io/kosmos-io/clusterlink/kindest/node:v1.25.3_1"
 REUSE=${REUSE:-false}
 VERSION=${VERSION:-latest}
 
+CN_ZONE=${CN_ZONE:-false}
+
 if [ $REUSE == true ]; then
     echo "!!!!!!!!!!!Warning: Setting REUSE to true will not delete existing clusters.!!!!!!!!!!!"
 fi
@@ -59,13 +61,31 @@ function create_cluster() {
     docker exec ${clustername}-control-plane /bin/sh -c "cat /etc/kubernetes/admin.conf"| sed -e "s|${clustername}-control-plane|$dockerip|g" -e "/certificate-authority-data:/d" -e "5s/^/    insecure-skip-tls-verify: true\n/"  -e "w ${CLUSTER_DIR}/kubeconfig"
 
     # install calico
-    docker pull quay.io/tigera/operator:v1.29.0
-    docker pull docker.io/calico/cni:v3.25.0
-    docker pull docker.io/calico/typha:v3.25.0
-    docker pull docker.io/calico/pod2daemon-flexvol:v3.25.0
-    docker pull docker.io/calico/kube-controllers:v3.25.0
-    docker pull docker.io/calico/node:v3.25.0
-    docker pull docker.io/calico/csi:v3.25.0
+    if [ "${CHINA_ZONE}" == false ]; then
+        docker pull quay.io/tigera/operator:v1.29.0
+        docker pull docker.io/calico/cni:v3.25.0
+        docker pull docker.io/calico/typha:v3.25.0
+        docker pull docker.io/calico/pod2daemon-flexvol:v3.25.0
+        docker pull docker.io/calico/kube-controllers:v3.25.0
+        docker pull docker.io/calico/node:v3.25.0
+        docker pull docker.io/calico/csi:v3.25.0
+    else
+        docker pull quay.m.daocloud.io/tigera/operator:v1.29.0
+        docker pull docker.m.daocloud.io/calico/cni:v3.25.0
+        docker pull docker.m.daocloud.io/calico/typha:v3.25.0
+        docker pull docker.m.daocloud.io/calico/pod2daemon-flexvol:v3.25.0
+        docker pull docker.m.daocloud.io/calico/kube-controllers:v3.25.0
+        docker pull docker.m.daocloud.io/calico/node:v3.25.0
+        docker pull docker.m.daocloud.io/calico/csi:v3.25.0
+
+        docker tag quay.m.daocloud.io/tigera/operator:v1.29.0 quay.io/tigera/operator:v1.29.0
+        docker tag docker.m.daocloud.io/calico/cni:v3.25.0 docker.io/calico/cni:v3.25.0
+        docker tag docker.m.daocloud.io/calico/typha:v3.25.0 docker.io/calico/typha:v3.25.0
+        docker tag docker.m.daocloud.io/calico/pod2daemon-flexvol:v3.25.0 docker.io/calico/pod2daemon-flexvol:v3.25.0
+        docker tag docker.m.daocloud.io/calico/kube-controllers:v3.25.0 docker.io/calico/kube-controllers:v3.25.0
+        docker tag docker.m.daocloud.io/calico/node:v3.25.0 docker.io/calico/node:v3.25.0
+        docker tag docker.m.daocloud.io/calico/csi:v3.25.0 docker.io/calico/csi:v3.25.0
+    fi
 
     kind load docker-image -n "$clustername" quay.io/tigera/operator:v1.29.0
     kind load docker-image -n "$clustername" docker.io/calico/cni:v3.25.0
